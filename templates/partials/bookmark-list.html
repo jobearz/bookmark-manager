@@ -1,0 +1,23 @@
+{{define "bookmark-list"}}
+{{range .}}
+<div class="bookmark-card" id="bookmark-{{.ID}}">
+    <div class="bookmark-header">
+        <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Title}}</a>
+        <button 
+            hx-delete="/bookmarks/{{.ID}}"
+            hx-target="#bookmark-{{.ID}}"
+            hx-swap="outerHTML"
+            hx-confirm="Delete this bookmark?"
+            class="delete-btn">
+            ✕
+        </button>
+    </div>
+    {{if .Notes}}
+    <p class="bookmark-notes">{{.Notes}}</p>
+    {{end}}
+    <span class="bookmark-url">{{.URL}}</span>
+</div>
+{{else}}
+<p class="empty-state">No bookmarks yet. Add one above.</p>
+{{end}}
+{{end}}

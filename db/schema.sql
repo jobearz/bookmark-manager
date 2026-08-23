@@ -9,6 +9,7 @@ CREATE TABLE bookmarks (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     category_id TEXT NOT NULL,
+    title TEXT NOT NULL,
     url TEXT NOT NULL UNIQUE,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL

@@ -1,0 +1,36 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Manager</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <span class="nav-title">Bookmarks</span>
+        <a href="/logout">Log out</a>
+    </nav>
+
+    <main>
+        <form 
+            hx-post="/bookmarks"
+            hx-target="#bookmark-list"
+            hx-swap="innerHTML"
+            hx-on::after-request="this.reset()">
+            <input type="text" name="title" placeholder="Title" required />
+            <input type="url" name="url" placeholder="https://..." required />
+            <input type="text" name="notes" placeholder="Notes (optional)" />
+            <button type="submit">Add Bookmark</button>
+        </form>
+
+        <div id="bookmark-list"
+            hx-get="/bookmarks"
+            hx-trigger="load">
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

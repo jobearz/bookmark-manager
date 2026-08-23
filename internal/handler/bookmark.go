@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"github.com/jobearz/bookmark-manager/internal/middleware"
@@ -11,65 +11,56 @@ import (
 
 type BookmarkHandler struct {
 	store store.LinkStore
+	tmpl  *template.Template
 }
 
-func NewBookmarkHandler(s store.LinkStore) *BookmarkHandler {
-	return &BookmarkHandler{store: s}
+func NewBookmarkHandler(s store.LinkStore, tmpl *template.Template) *BookmarkHandler {
+	return &BookmarkHandler{store: s, tmpl: tmpl}
 }
 
 func (h *BookmarkHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserIDFromToken(r)
-	// check if request is POST
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var bookmark models.Bookmark
 	bookmark.UserID = userID
-	if err := json.NewDecoder(r.Body).Decode(&bookmark); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
+	bookmark.Title = r.FormValue("title")
+	bookmark.URL = r.FormValue("url")
+	bookmark.Notes = r.FormValue("notes")
+	bookmark.CategoryID = r.FormValue("category_id")
 
-	created, err := h.store.Create(bookmark)
+	_, err := h.store.Create(bookmark)
 	if err != nil {
 		http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(created)
+	// return updated bookmark list as HTML for HTMX to swap in
+	bookmarks, err := h.store.GetAll(userID)
+	if err != nil {
+		http.Error(w, "failed to get bookmarks", http.StatusInternalServerError)
+		return
+	}
+	h.tmpl.ExecuteTemplate(w, "bookmark-list", bookmarks)
 }
 
 func (h *BookmarkHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserIDFromToken(r)
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	bookmarks, err := h.store.GetAll(userID)
 	if err != nil {
-		http.Error(w, "failed to get bookmark", http.StatusInternalServerError)
+		http.Error(w, "failed to get bookmarks", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(bookmarks)
+	h.tmpl.ExecuteTemplate(w, "bookmark-list", bookmarks)
 }
 
 func (h *BookmarkHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/bookmarks/"):]
 	bookmark, err := h.store.GetByID(id)
 	if err != nil {
-		http.Error(w, "failed to find a bookmark with that ID", http.StatusNotFound)
+		http.Error(w, "bookmark not found", http.StatusNotFound)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(bookmark)
+	h.tmpl.ExecuteTemplate(w, "bookmark-card", bookmark)
 }
 
 func (h *BookmarkHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -79,5 +70,6 @@ func (h *BookmarkHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to delete bookmark", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	// return empty string — HTMX will swap the card with nothing (deletes it)
+	w.WriteHeader(http.StatusOK)
 }
