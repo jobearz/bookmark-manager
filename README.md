@@ -16,6 +16,6 @@ Private personal dashboard only
 
 
 ## Tech Stack
-* **Frontend:** **React** with **Tailwind CSS**
+* **Frontend:** **HTMX**
 * **Backend:** **Golang**
 * **Database:** **PostgreSQL**
