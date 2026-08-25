@@ -32,7 +32,7 @@ func main() {
 	// static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	// auth routes — no middleware
+	// auth routes
 	mux.HandleFunc("/login", authHandler.LoginPage)
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/register", authHandler.RegisterPage)
