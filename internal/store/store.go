@@ -12,4 +12,6 @@ type LinkStore interface {
 	GetUserByID(id string) (models.User, error)
 	DeleteBookmark(id string) error
 	DeleteCategory(id string) error
+	EditBookmark(id string, bookmark models.Bookmark) (models.Bookmark, error)
+	EditCategory(id string, category models.Category) (models.Category, error)
 }
